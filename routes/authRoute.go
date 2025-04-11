@@ -2,31 +2,23 @@ package routes
 
 import (
 	"Streaming-Website-Master/controllers"
-	"Streaming-Website-Master/middleware"
+	"Streaming-Website-Master/services"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
-// AuthRoutes sets up the authentication routes.
-func AuthRoutes(router *gin.Engine) {
-	authController := controllers.NewAuthController()
+func RegisterAuthRoutes(router *gin.Engine, db *gorm.DB) {
+	authService := services.NewAuthService(db)
+	authController := controllers.NewAuthController(authService)
 
-	// Public route for login.
-	router.POST("/login", authController.Login)
-
-	// Example: Protected route group
-	protected := router.Group("/api")
-	protected.Use(middleware.AuthMiddleware())
+	// Auth routes
+	authRoutes := router.Group("/api/auth")
 	{
-		// Add protected routes here. For example, a user profile endpoint.
-		protected.GET("/profile", func(c *gin.Context) {
-			// Retrieve user info from the context set in the middleware.
-			userID, _ := c.Get("userID")
-			role, _ := c.Get("role")
-			c.JSON(200, gin.H{
-				"userID": userID,
-				"role":   role,
-			})
-		})
+		authRoutes.POST("/register", authController.Register)
+		authRoutes.POST("/login", authController.Login)
+		authRoutes.POST("/admin/login", authController.AdminLogin)
+		authRoutes.POST("/change-password", authController.ChangePassword)
+		authRoutes.GET("/user/:id", authController.GetUserProfile)
 	}
 }

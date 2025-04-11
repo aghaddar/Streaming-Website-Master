@@ -1,21 +1,42 @@
 package main
 
 import (
-	"fmt"
+	"Streaming-Website-Master/database"
+	"Streaming-Website-Master/routes"
+	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
+	"log"
+	"os"
 )
 
-//TIP <p>To run your code, right-click the code and select <b>Run</b>.</p> <p>Alternatively, click
-// the <icon src="AllIcons.Actions.Execute"/> icon in the gutter and select the <b>Run</b> menu item from here.</p>
-
 func main() {
-	//TIP <p>Press <shortcut actionId="ShowIntentionActions"/> when your caret is at the underlined text
-	// to see how GoLand suggests fixing the warning.</p><p>Alternatively, if available, click the lightbulb to view possible fixes.</p>
-	s := "gopher"
-	fmt.Printf("Hello and welcome, %s!\n", s)
-
-	for i := 1; i <= 5; i++ {
-		//TIP <p>To start your debugging session, right-click your code in the editor and select the Debug option.</p> <p>We have set one <icon src="AllIcons.Debugger.Db_set_breakpoint"/> breakpoint
-		// for you, but you can always add more by pressing <shortcut actionId="ToggleLineBreakpoint"/>.</p>
-		fmt.Println("i =", 100/i)
+	// Load .env variables (for JWT_SECRET_KEY etc.)
+	err := godotenv.Load()
+	if err != nil {
+		log.Println("No .env file found, relying on system env vars")
 	}
+
+	// Connect to MySQL database
+	db := database.ConnectDB()
+
+	// Set Gin mode
+	mode := os.Getenv("GIN_MODE")
+	if mode == "" {
+		mode = "debug"
+	}
+	gin.SetMode(mode)
+
+	// Setup Gin router
+	router := gin.Default()
+
+	// Register auth routes: /api/auth/login, register, etc.
+	routes.RegisterAuthRoutes(router, db)
+
+	// Start server
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	log.Printf("🚀 Server running on http://localhost:%s", port)
+	router.Run(":" + port)
 }
