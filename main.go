@@ -1,22 +1,27 @@
 package main
 
 import (
-	"Streaming-Website-Master/database"
-	"Streaming-Website-Master/routes"
-	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
+	"fmt"
 	"log"
 	"os"
+
+	"Streaming-Website-Master/controllers"
+	"Streaming-Website-Master/database"
+	"Streaming-Website-Master/routes"
+	"Streaming-Website-Master/services"
+
+	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
 func main() {
-	// Load .env variables (for JWT_SECRET_KEY etc.)
+	// Load .env file
 	err := godotenv.Load()
 	if err != nil {
-		log.Println("No .env file found, relying on system env vars")
+		log.Println("⚠️ No .env file found, relying on system environment variables.")
 	}
 
-	// Connect to MySQL database
+	// Connect to DB
 	db := database.ConnectDB()
 
 	// Set Gin mode
@@ -26,17 +31,26 @@ func main() {
 	}
 	gin.SetMode(mode)
 
-	// Setup Gin router
+	// Initialize router
 	router := gin.Default()
 
-	// Register auth routes: /api/auth/login, register, etc.
-	routes.RegisterAuthRoutes(router, db)
+	// Services & Controllers
+	userService := services.NewUserService(db)
+	userController := controllers.NewUserController(userService)
 
-	// Start server
+	animeService := services.NewAnimeService(db)
+	animeController := controllers.NewAnimeController(animeService)
+
+	// ✅ Register Routes
+	routes.RegisterUserRoutes(router, userController)
+	routes.RegisterAnimeRoutes(router, animeController)
+	routes.RegisterAuthRoutes(router, db) // <-- Make sure this is called!
+
+	// Run the server
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
-	log.Printf("🚀 Server running on http://localhost:%s", port)
+	fmt.Printf("🚀 Server running at http://localhost:%s\n", port)
 	router.Run(":" + port)
 }
