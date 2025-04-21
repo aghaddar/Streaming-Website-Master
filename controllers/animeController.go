@@ -5,7 +5,6 @@ import (
 	"Streaming-Website-Master/services"
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"strconv"
 )
 
 type AnimeController struct {
@@ -30,13 +29,8 @@ func (ac *AnimeController) CreateAnime(c *gin.Context) {
 }
 
 func (ac *AnimeController) GetAnimeByID(c *gin.Context) {
-	idParam := c.Param("id")
-	id, err := strconv.ParseUint(idParam, 10, 32)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid anime ID"})
-		return
-	}
-	anime, err := ac.service.GetAnimeByID(uint(id))
+	idParam := c.Param("id") // AnimeID is a string
+	anime, err := ac.service.GetAnimeByID(idParam)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -49,18 +43,13 @@ func (ac *AnimeController) GetAnimeByID(c *gin.Context) {
 }
 
 func (ac *AnimeController) UpdateAnime(c *gin.Context) {
-	idParam := c.Param("id")
-	id, err := strconv.ParseUint(idParam, 10, 32)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid anime ID"})
-		return
-	}
+	idParam := c.Param("id") // AnimeID is a string
 	var anime models.Anime
-	if err = c.ShouldBindJSON(&anime); err != nil {
+	if err := c.ShouldBindJSON(&anime); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	anime.AnimeID = uint(id)
+	anime.AnimeID = idParam // Set AnimeID from URL parameter
 	if err := ac.service.UpdateAnime(&anime); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -69,13 +58,8 @@ func (ac *AnimeController) UpdateAnime(c *gin.Context) {
 }
 
 func (ac *AnimeController) DeleteAnime(c *gin.Context) {
-	idParam := c.Param("id")
-	id, err := strconv.ParseUint(idParam, 10, 32)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid anime ID"})
-		return
-	}
-	if err := ac.service.DeleteAnime(uint(id)); err != nil {
+	idParam := c.Param("id") // AnimeID is a string
+	if err := ac.service.DeleteAnime(idParam); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
