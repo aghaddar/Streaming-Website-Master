@@ -4,14 +4,14 @@ import "time"
 
 type Watchlist struct {
 	WatchlistID        uint      `gorm:"primaryKey;autoIncrement"`
-	UserID             uint      `gorm:"not null;foreignKey:UserID"`
-	AnimeID            uint      `gorm:"not null;foreignKey:AnimeID"`
+	UserID             uint      `gorm:"not null"`
+	AnimeID            string    `gorm:"type:text;not null"`
 	CreatedAt          time.Time `gorm:"default:current_timestamp"`
 	Status             string    `gorm:"type:enum('Watching', 'Completed', 'On Hold', 'Dropped');default:'Watching'"`
 	Priority           string    `gorm:"type:enum('High', 'Medium', 'Low');default:'Medium'"`
-	LastWatchedEpisode *uint     `gorm:"default:NULL"`
+	LastWatchedEpisode *string   `gorm:"type:text"`
 	ProgressPercentage float64   `gorm:"type:decimal(5,2);default:0.00"`
 
 	User  User  `gorm:"foreignKey:UserID"`
-	Anime Anime `gorm:"foreignKey:AnimeID"`
+	Anime Anime `gorm:"foreignKey:AnimeID;references:AnimeID"`
 }
