@@ -2,16 +2,10 @@ package routes
 
 import (
 	"Streaming-Website-Master/controllers"
-	"Streaming-Website-Master/services"
-
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
-func RegisterCommentRoutes(router *gin.Engine, db *gorm.DB) {
-	commentService := services.NewCommentService(db)
-	commentController := controllers.NewCommentController(commentService)
-
+func RegisterCommentRoutes(router *gin.Engine, commentController *controllers.CommentController) {
 	commentRoutes := router.Group("/api/comments")
 	{
 		commentRoutes.POST("/", commentController.CreateComment)

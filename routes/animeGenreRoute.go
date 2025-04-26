@@ -2,15 +2,10 @@ package routes
 
 import (
 	"Streaming-Website-Master/controllers"
-	"Streaming-Website-Master/services"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
-func RegisterAnimeGenreRoutes(router *gin.Engine, db *gorm.DB) {
-	animeGenreService := services.NewAnimeGenreService(db)
-	animeGenreController := controllers.NewAnimeGenreController(animeGenreService)
-
+func RegisterAnimeGenreRoutes(router *gin.Engine, animeGenreController *controllers.AnimeGenreController) {
 	animeGenreRoutes := router.Group("/api/anime_genres")
 	{
 		animeGenreRoutes.POST("/", animeGenreController.CreateAnimeGenre)

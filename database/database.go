@@ -9,7 +9,7 @@ import (
 
 var DB *gorm.DB
 
-func ConnectDB() *gorm.DB {
+func ConnectDB() (*gorm.DB, error) {
 	dsn := "root:123456789@tcp(localhost:3306)/streaming_anime?charset=utf8mb4&parseTime=True&loc=Local"
 	var err error
 	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
@@ -20,5 +20,5 @@ func ConnectDB() *gorm.DB {
 	// Auto Migrate schema
 	DB.AutoMigrate(&models.Anime{})
 
-	return DB // ✅ Now returns the database instance
+	return DB, err // ✅ Now returns the database instance
 }

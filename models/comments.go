@@ -8,6 +8,6 @@ type Comments struct {
 	EpisodeID   *string   `gorm:"type:varchar(255)"`
 	CommentText string    `gorm:"type:text;not null"`
 	CreatedAt   time.Time `gorm:"default:current_timestamp"`
-	User        User      `gorm:"foreignKey:UserID"`
+	User        User      `gorm:"foreignKey:UserID;references:UserID"`
 	Episode     Episode   `gorm:"foreignKey:EpisodeID;references:EpisodeID"`
 }

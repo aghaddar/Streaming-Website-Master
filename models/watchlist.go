@@ -12,6 +12,6 @@ type Watchlist struct {
 	LastWatchedEpisode *string   `gorm:"type:varchar(255)"`
 	ProgressPercentage float64   `gorm:"type:decimal(5,2);default:0.00"`
 
-	User  User  `gorm:"foreignKey:UserID"`
+	User  User  `gorm:"foreignKey:UserID;references:UserID"` // Correct FK
 	Anime Anime `gorm:"foreignKey:AnimeID;references:AnimeID"`
 }

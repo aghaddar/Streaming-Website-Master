@@ -2,17 +2,10 @@ package routes
 
 import (
 	"Streaming-Website-Master/controllers"
-	"Streaming-Website-Master/services"
-
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
-func RegisterAuthRoutes(router *gin.Engine, db *gorm.DB) {
-	authService := services.NewAuthService(db)
-	authController := controllers.NewAuthController(authService)
-
-	// Auth routes
+func RegisterAuthRoutes(router *gin.Engine, authController *controllers.AuthController) {
 	authRoutes := router.Group("/api/auth")
 	{
 		authRoutes.POST("/register", authController.Register)

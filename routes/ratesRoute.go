@@ -5,7 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterRatingRoute(router *gin.Engine, rateController *controllers.RateController) {
+func RegisterRatingRoutes(router *gin.Engine, rateController *controllers.RateController) {
 	rateRoutes := router.Group("/api/ratings")
 	{
 		rateRoutes.POST("/", rateController.CreateRating)
