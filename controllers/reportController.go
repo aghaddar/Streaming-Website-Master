@@ -61,7 +61,7 @@ func (rc *ReportController) UpdateReport(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	report.ReportID = uint(id)
+	report.ReportID = uint64(id)
 	if err := rc.reportService.UpdateReport(&report); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

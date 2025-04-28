@@ -3,11 +3,9 @@ package models
 import "time"
 
 type Recommendation struct {
-	RecommendationID uint   `gorm:"primaryKey;autoIncrement"`
-	UserID           uint   `gorm:"not null"` // <-- Must be here!
-	AnimeID          string `gorm:"type:varchar(255);not null"`
-	Reason           string
-	CreatedAt        time.Time `gorm:"default:current_timestamp"`
-	User             User      `gorm:"foreignKey:UserID;references:UserID"` // <-- Explicit
-	Anime            Anime     `gorm:"foreignKey:AnimeID;references:AnimeID"`
+	RecommendationID uint64    `gorm:"primaryKey;autoIncrement" json:"recommendation_id"`
+	UserID           uint64    `gorm:"not null" json:"user_id"`
+	AnimeID          string    `gorm:"size:255;not null" json:"anime_id"`
+	Reason           *string   `gorm:"type:text" json:"reason"`
+	CreatedAt        time.Time `gorm:"autoCreateTime" json:"created_at"`
 }

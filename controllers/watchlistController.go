@@ -61,7 +61,7 @@ func (wc *WatchlistController) UpdateWatchlist(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	watchlist.WatchlistID = uint(id)
+	watchlist.WatchlistID = uint64(id)
 	if err := wc.watchlistService.UpdateWatchlist(&watchlist); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

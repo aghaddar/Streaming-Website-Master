@@ -16,12 +16,12 @@ import (
 )
 
 func main() {
-	// Load environment variables from .env; if not found, continue with defaults.
+	// Load environment variables from .env file if present.
 	if err := godotenv.Load(); err != nil {
 		log.Println("No .env file found, using default configuration")
 	}
 
-	// Set Gin mode from environment or default to "debug" mode.
+	// Set Gin mode from environment variable or default to debug mode.
 	ginMode := os.Getenv("GIN_MODE")
 	if ginMode == "" {
 		ginMode = gin.DebugMode
@@ -29,32 +29,78 @@ func main() {
 	gin.SetMode(ginMode)
 
 	// Connect to the database.
-	// Assuming database.ConnectDB returns (db, error).
 	db, err := database.ConnectDB()
-	log.Println("Database connection established successfully")
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 	log.Println("Database connection established successfully")
 
-	// Auto-migrate database models.
+	// Auto-migrate database models in the correct order
 	log.Println("Running database migrations...")
-	if err := db.AutoMigrate(
-		&models.User{},
-		&models.Admin{},
-		&models.Anime{},
-		&models.Episode{},
-		&models.Genre{},
-		&models.Anime_Genre{},
-		&models.Comments{},
-		&models.Rating{},
-		&models.Recommendation{},
-		&models.Report{},
-		&models.Watch{},
-		&models.Watchlist{},
-	); err != nil {
-		log.Fatalf("Failed to run migrations: %v", err)
+
+	// First, migrate tables without foreign keys or with simple dependencies
+	log.Println("Migrating Admin model...")
+	if err := db.AutoMigrate(&models.Admin{}); err != nil {
+		log.Fatalf("Failed to migrate Admin model: %v", err)
 	}
+
+	log.Println("Migrating User model...")
+	if err := db.AutoMigrate(&models.User{}); err != nil {
+		log.Fatalf("Failed to migrate User model: %v", err)
+	}
+
+	log.Println("Migrating Genre model...")
+	if err := db.AutoMigrate(&models.Genre{}); err != nil {
+		log.Fatalf("Failed to migrate Genre model: %v", err)
+	}
+
+	log.Println("Migrating Anime model...")
+	if err := db.AutoMigrate(&models.Anime{}); err != nil {
+		log.Fatalf("Failed to migrate Anime model: %v", err)
+	}
+
+	// Then migrate tables with foreign keys in the correct order
+	log.Println("Migrating AnimeGenre model...")
+	if err := db.AutoMigrate(&models.AnimeGenre{}); err != nil {
+		log.Fatalf("Failed to migrate AnimeGenre model: %v", err)
+	}
+
+	log.Println("Migrating Episode model...")
+	if err := db.AutoMigrate(&models.Episode{}); err != nil {
+		log.Fatalf("Failed to migrate Episode model: %v", err)
+	}
+
+	log.Println("Migrating Comment model...")
+	if err := db.AutoMigrate(&models.Comment{}); err != nil {
+		log.Fatalf("Failed to migrate Comment model: %v", err)
+	}
+
+	log.Println("Migrating Rating model...")
+	if err := db.AutoMigrate(&models.Rating{}); err != nil {
+		log.Fatalf("Failed to migrate Rating model: %v", err)
+	}
+
+	log.Println("Migrating Recommendation model...")
+	if err := db.AutoMigrate(&models.Recommendation{}); err != nil {
+		log.Fatalf("Failed to migrate Recommendation model: %v", err)
+	}
+
+	log.Println("Migrating Watch model...")
+	if err := db.AutoMigrate(&models.Watch{}); err != nil {
+		log.Fatalf("Failed to migrate Watch model: %v", err)
+	}
+
+	log.Println("Migrating Watchlist model...")
+	if err := db.AutoMigrate(&models.Watchlist{}); err != nil {
+		log.Fatalf("Failed to migrate Watchlist model: %v", err)
+	}
+
+	// Migrate Report model last as it depends on both User and Comment
+	log.Println("Migrating Report model...")
+	if err := db.AutoMigrate(&models.Report{}); err != nil {
+		log.Fatalf("Failed to migrate Report model: %v", err)
+	}
+
 	log.Println("Database migrations completed")
 
 	// Create a new Gin router.
@@ -62,8 +108,7 @@ func main() {
 
 	// Configure CORS.
 	corsConfig := cors.DefaultConfig()
-	// Adjust allowed origins as needed (use AllowAllOrigins only for development)
-	corsConfig.AllowOrigins = []string{"http://localhost:3000", "https://your-production-domain.com"}
+	corsConfig.AllowOrigins = []string{"http://localhost:3000", "http://localhost:8080", "https://your-production-domain.com"}
 	corsConfig.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
 	corsConfig.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"}
 	router.Use(cors.New(corsConfig))
@@ -99,7 +144,7 @@ func main() {
 	authController := controllers.NewAuthController(authService)
 
 	// Register authentication routes.
-	routes.RegisterAuthRoutes(router, authController)
+	routes.RegisterAuthRoutes(router, authController, adminController)
 
 	// Register other API routes.
 	routes.RegisterUserRoutes(router, userController)
@@ -108,7 +153,6 @@ func main() {
 	routes.RegisterGenreRoute(router, genreController)
 	routes.RegisterAnimeGenreRoutes(router, animeGenreController)
 	routes.RegisterCommentRoutes(router, commentController)
-	// Assuming there is a separate function for ratings; if not, adjust accordingly.
 	routes.RegisterRatingRoutes(router, ratingController)
 	routes.RegisterRecommendationRoutes(router, recommendationController)
 	routes.RegisterReportRoutes(router, reportController)
@@ -116,17 +160,12 @@ func main() {
 	routes.RegisterWatchlistRoutes(router, watchlistController)
 	routes.RegisterAdminRoutes(router, adminController)
 
-	// Serve static files.
-	// Use the URL path ("/static") and the local directory ("./static") where your assets are stored.
-	router.Static("/static", "./static")
-
-	// Start the server.
+	// Start the server on the specified port, defaulting to 8080.
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8080"
+		port = "3001"
 	}
-	log.Printf("Starting server on port %s...", port)
 	if err := router.Run(":" + port); err != nil {
-		log.Fatalf("Server failed to start: %v", err)
+		log.Fatalf("Failed to run server: %v", err)
 	}
 }

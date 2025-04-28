@@ -3,13 +3,10 @@ package models
 import "time"
 
 type Watch struct {
-	WatchID     uint   `gorm:"primaryKey;autoIncrement"`
-	UserID      uint   `gorm:"not null"`
-	EpisodeID   string `gorm:"type:varchar(255);not null"`
-	WatchedTime int
-	Completed   bool
-	UpdatedAt   time.Time `gorm:"default:current_timestamp"`
-
-	User    User    `gorm:"foreignKey:UserID;references:UserID"` // ✅ Correct FK
-	Episode Episode `gorm:"foreignKey:EpisodeID;references:EpisodeID"`
+	WatchID     uint64    `gorm:"primaryKey;autoIncrement" json:"watch_id"`
+	UserID      uint64    `gorm:"not null" json:"user_id"`
+	EpisodeID   string    `gorm:"size:255;not null" json:"episode_id"`
+	WatchedTime *int      `json:"watched_time"`
+	Completed   bool      `gorm:"default:false" json:"completed"`
+	UpdatedAt   time.Time `gorm:"autoUpdateTime" json:"updated_at"`
 }

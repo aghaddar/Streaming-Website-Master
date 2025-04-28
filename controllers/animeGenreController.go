@@ -17,7 +17,7 @@ func NewAnimeGenreController(service *services.AnimeGenreService) *AnimeGenreCon
 }
 
 func (c *AnimeGenreController) CreateAnimeGenre(ctx *gin.Context) {
-	var ag models.Anime_Genre
+	var ag models.AnimeGenre
 	if err := ctx.ShouldBindJSON(&ag); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

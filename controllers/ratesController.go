@@ -61,7 +61,7 @@ func (rc *RateController) UpdateRating(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	rating.RateID = uint(id)
+	rating.RateID = uint64(id)
 	if err := rc.ratingService.UpdateRating(&rating); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

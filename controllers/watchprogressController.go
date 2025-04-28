@@ -61,7 +61,7 @@ func (wc *WatchProgressController) UpdateWatchProgress(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	watch.WatchID = uint(id)
+	watch.WatchID = uint64(id)
 	if err := wc.watchProgressService.UpdateWatchProgress(&watch); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

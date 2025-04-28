@@ -3,14 +3,12 @@ package models
 import "time"
 
 type Episode struct {
-	EpisodeID     string `gorm:"primaryKey;type:varchar(255);not null"`
-	AnimeID       string `gorm:"type:varchar(255);not null"`
-	Title         string `gorm:"size:255;not null"`
-	EpisodeNumber int    `gorm:"not null"`
-	Duration      *int
-	VideoURL      *string    `gorm:"type:text"`
-	ReleaseDate   *time.Time `gorm:"type:date"`
-	CreatedAt     time.Time  `gorm:"default:current_timestamp"`
-
-	Anime Anime `gorm:"foreignKey:AnimeID;references:AnimeID"`
+	EpisodeID     string     `gorm:"primaryKey;size:255;not null" json:"episode_id"`
+	AnimeID       string     `gorm:"size:255;not null" json:"anime_id"`
+	Title         string     `gorm:"size:255;not null" json:"title"`
+	EpisodeNumber int        `gorm:"not null" json:"episode_number"`
+	Duration      *int       `json:"duration"` // duration in minutes?
+	VideoURL      *string    `gorm:"type:text" json:"video_url"`
+	ReleaseDate   *time.Time `json:"release_date"`
+	CreatedAt     time.Time  `gorm:"autoCreateTime" json:"created_at"`
 }

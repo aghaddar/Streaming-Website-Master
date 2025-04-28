@@ -63,7 +63,7 @@ func (gc *GenreController) UpdateGenre(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	genre.GenreID = uint(id)
+	genre.GenreID = uint64(id)
 	if err := gc.service.UpdateGenre(&genre); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

@@ -1,6 +1,6 @@
 package models
 
-type Anime_Genre struct {
-	AnimeID string `gorm:"primaryKey;type:varchar(255);not null"`
-	GenreID uint   `gorm:"primaryKey;not null"`
+type AnimeGenre struct {
+	AnimeID string `gorm:"primaryKey;size:255;not null" json:"anime_id"`
+	GenreID uint64 `gorm:"primaryKey;not null" json:"genre_id"`
 }

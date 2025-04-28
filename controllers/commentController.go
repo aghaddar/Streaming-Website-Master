@@ -18,7 +18,7 @@ func NewCommentController(commentService *services.CommentService) *CommentContr
 }
 
 func (cc *CommentController) CreateComment(c *gin.Context) {
-	var comment models.Comments
+	var comment models.Comment
 	if err := c.ShouldBindJSON(&comment); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -54,12 +54,12 @@ func (cc *CommentController) UpdateComment(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid comment ID"})
 		return
 	}
-	var comment models.Comments
+	var comment models.Comment
 	if err := c.ShouldBindJSON(&comment); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	comment.CommentID = uint(id)
+	comment.CommentID = uint64(id)
 	if err := cc.commentService.UpdateComment(&comment); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

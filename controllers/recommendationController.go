@@ -61,7 +61,7 @@ func (rc *RecommendationController) UpdateRecommendation(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	recommendation.RecommendationID = uint(id)
+	recommendation.RecommendationID = uint64(id)
 	if err := rc.recommendationService.UpdateRecommendation(&recommendation); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

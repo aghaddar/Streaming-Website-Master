@@ -1,3 +1,4 @@
+// File: controllers/adminsController.go
 package controllers
 
 import (
@@ -11,11 +12,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type AdminController struct{}
+type AdminController struct {
+	adminsService *services.AdminService
+}
 
 // NewAdminController returns a new AdminController instance.
-func NewAdminController(*services.AdminService) *AdminController {
-	return &AdminController{}
+func NewAdminController(adminService *services.AdminService) *AdminController {
+	return &AdminController{
+		adminsService: adminService,
+	}
 }
 
 func (a *AdminController) GetAdmins(c *gin.Context) {
@@ -41,17 +46,25 @@ func (a *AdminController) GetAdmin(c *gin.Context) {
 	c.JSON(http.StatusOK, admin)
 }
 
-func (a *AdminController) CreateAdmin(c *gin.Context) {
-	var admin models.Admin
-	if err := c.ShouldBindJSON(&admin); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+func (c *AdminController) CreateAdmin(ctx *gin.Context) {
+	var request struct {
+		Username     string `json:"username" binding:"required"`
+		Email        string `json:"email" binding:"required,email"`
+		PasswordHash string `json:"passwordHash" binding:"required,min=6"`
+		Role         string `json:"role" binding:"required"`
+	}
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	if err := database.DB.Create(&admin).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+
+	admin, err := c.adminsService.Register(request.Username, request.Email, request.PasswordHash, request.Role)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusCreated, admin)
+
+	ctx.JSON(http.StatusCreated, admin)
 }
 
 func (a *AdminController) UpdateAdmin(c *gin.Context) {
