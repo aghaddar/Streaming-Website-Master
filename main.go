@@ -1,14 +1,13 @@
 package main
 
 import (
-	"log"
-	"os"
-
 	"Streaming-Website-Master/controllers"
 	"Streaming-Website-Master/database"
 	"Streaming-Website-Master/models"
 	"Streaming-Website-Master/routes"
 	"Streaming-Website-Master/services"
+	"log"
+	"os"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -16,104 +15,57 @@ import (
 )
 
 func main() {
-	// Load environment variables from .env file if present.
+	// Load environment variables from .env file if present
 	if err := godotenv.Load(); err != nil {
 		log.Println("No .env file found, using default configuration")
 	}
 
-	// Set Gin mode from environment variable or default to debug mode.
+	// Set Gin mode
 	ginMode := os.Getenv("GIN_MODE")
 	if ginMode == "" {
 		ginMode = gin.DebugMode
 	}
 	gin.SetMode(ginMode)
 
-	// Connect to the database.
+	// Connect to database
 	db, err := database.ConnectDB()
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		log.Fatal("Failed to connect to database:", err)
 	}
 	log.Println("Database connection established successfully")
 
-	// Auto-migrate database models in the correct order
+	// Disable foreign key constraints during migration to avoid constraint errors
+	db.DisableForeignKeyConstraintWhenMigrating = true
+
+	// Auto migrate database models
 	log.Println("Running database migrations...")
-
-	// First, migrate tables without foreign keys or with simple dependencies
-	log.Println("Migrating Admin model...")
-	if err := db.AutoMigrate(&models.Admin{}); err != nil {
-		log.Fatalf("Failed to migrate Admin model: %v", err)
-	}
-
-	log.Println("Migrating User model...")
-	if err := db.AutoMigrate(&models.User{}); err != nil {
-		log.Fatalf("Failed to migrate User model: %v", err)
-	}
-
-	log.Println("Migrating Genre model...")
-	if err := db.AutoMigrate(&models.Genre{}); err != nil {
-		log.Fatalf("Failed to migrate Genre model: %v", err)
-	}
-
-	log.Println("Migrating Anime model...")
-	if err := db.AutoMigrate(&models.Anime{}); err != nil {
-		log.Fatalf("Failed to migrate Anime model: %v", err)
-	}
-
-	// Then migrate tables with foreign keys in the correct order
-	log.Println("Migrating AnimeGenre model...")
-	if err := db.AutoMigrate(&models.AnimeGenre{}); err != nil {
-		log.Fatalf("Failed to migrate AnimeGenre model: %v", err)
-	}
-
-	log.Println("Migrating Episode model...")
-	if err := db.AutoMigrate(&models.Episode{}); err != nil {
-		log.Fatalf("Failed to migrate Episode model: %v", err)
-	}
-
-	log.Println("Migrating Comment model...")
-	if err := db.AutoMigrate(&models.Comment{}); err != nil {
-		log.Fatalf("Failed to migrate Comment model: %v", err)
-	}
-
-	log.Println("Migrating Rating model...")
-	if err := db.AutoMigrate(&models.Rating{}); err != nil {
-		log.Fatalf("Failed to migrate Rating model: %v", err)
-	}
-
-	log.Println("Migrating Recommendation model...")
-	if err := db.AutoMigrate(&models.Recommendation{}); err != nil {
-		log.Fatalf("Failed to migrate Recommendation model: %v", err)
-	}
-
-	log.Println("Migrating Watch model...")
-	if err := db.AutoMigrate(&models.Watch{}); err != nil {
-		log.Fatalf("Failed to migrate Watch model: %v", err)
-	}
-
-	log.Println("Migrating Watchlist model...")
-	if err := db.AutoMigrate(&models.Watchlist{}); err != nil {
-		log.Fatalf("Failed to migrate Watchlist model: %v", err)
-	}
-
-	// Migrate Report model last as it depends on both User and Comment
-	log.Println("Migrating Report model...")
-	if err := db.AutoMigrate(&models.Report{}); err != nil {
-		log.Fatalf("Failed to migrate Report model: %v", err)
-	}
-
+	db.AutoMigrate(
+		&models.User{},
+		&models.Admin{},
+		&models.Anime{},
+		&models.Episode{},
+		&models.Genre{},
+		&models.AnimeGenre{},
+		&models.Comment{},
+		&models.Rating{},
+		&models.Recommendation{},
+		&models.Report{},
+		&models.Watch{},
+		&models.Watchlist{},
+	)
 	log.Println("Database migrations completed")
 
-	// Create a new Gin router.
+	// Create a new Gin router
 	router := gin.Default()
 
-	// Configure CORS.
-	corsConfig := cors.DefaultConfig()
-	corsConfig.AllowOrigins = []string{"http://localhost:3000", "http://localhost:8080", "https://your-production-domain.com"}
-	corsConfig.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
-	corsConfig.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"}
-	router.Use(cors.New(corsConfig))
+	// Configure CORS
+	config := cors.DefaultConfig()
+	config.AllowAllOrigins = true
+	config.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
+	config.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"}
+	router.Use(cors.New(config))
 
-	// Initialize services.
+	// Initialize services
 	userService := services.NewUserService(db)
 	animeService := services.NewAnimeService(db)
 	episodeService := services.NewEpisodeService(db)
@@ -124,11 +76,10 @@ func main() {
 	recommendationService := services.NewRecommendationService(db)
 	reportService := services.NewReportService(db)
 	watchProgressService := services.NewWatchProgressService(db)
-	watchlistService := services.NewWatchlistService(db)
 	adminService := services.NewAdminService(db)
 	authService := services.NewAuthService(db)
 
-	// Initialize controllers.
+	// Initialize controllers
 	userController := controllers.NewUserController(userService)
 	animeController := controllers.NewAnimeController(animeService)
 	episodeController := controllers.NewEpisodeController(episodeService)
@@ -139,33 +90,121 @@ func main() {
 	recommendationController := controllers.NewRecommendationController(recommendationService)
 	reportController := controllers.NewReportController(reportService)
 	watchProgressController := controllers.NewWatchProgressController(watchProgressService)
-	watchlistController := controllers.NewWatchlistController(watchlistService)
+	// Note: watchlistService removed as watchlist routes are defined in routes/watchlistRoute.go
 	adminController := controllers.NewAdminController(adminService)
 	authController := controllers.NewAuthController(authService)
 
-	// Register authentication routes.
+	// Register auth routes (include both auth and admin controllers as required)
 	routes.RegisterAuthRoutes(router, authController, adminController)
 
-	// Register other API routes.
-	routes.RegisterUserRoutes(router, userController)
-	routes.RegisterAnimeRoutes(router, animeController)
-	routes.RegisterEpisodesRoutes(router, episodeController)
-	routes.RegisterGenreRoute(router, genreController)
-	routes.RegisterAnimeGenreRoutes(router, animeGenreController)
-	routes.RegisterCommentRoutes(router, commentController)
-	routes.RegisterRatingRoutes(router, ratingController)
-	routes.RegisterRecommendationRoutes(router, recommendationController)
-	routes.RegisterReportRoutes(router, reportController)
-	routes.RegisterWatchProgressRoutes(router, watchProgressController)
-	routes.RegisterWatchlistRoutes(router, watchlistController)
-	routes.RegisterAdminRoutes(router, adminController)
+	// Register other routes
+	userRoutes := router.Group("/api/users")
+	{
+		userRoutes.GET("/", userController.ListUsers)
+		userRoutes.GET("/:id", userController.GetUserByID)
+		userRoutes.POST("/", userController.CreateUser)
+		userRoutes.PUT("/:id", userController.UpdateUser)
+		userRoutes.DELETE("/:id", userController.DeleteUser)
+	}
 
-	// Start the server on the specified port, defaulting to 8080.
+	animeRoutes := router.Group("/api/anime")
+	{
+		animeRoutes.GET("/", animeController.ListAnimes)
+		animeRoutes.GET("/:id", animeController.GetAnimeByID)
+		animeRoutes.POST("/", animeController.CreateAnime)
+		animeRoutes.PUT("/:id", animeController.UpdateAnime)
+		animeRoutes.DELETE("/:id", animeController.DeleteAnime)
+	}
+
+	episodeRoutes := router.Group("/api/episodes")
+	{
+		episodeRoutes.GET("/", episodeController.ListEpisodes)
+		episodeRoutes.GET("/:id", episodeController.GetEpisode)
+		episodeRoutes.POST("/", episodeController.CreateEpisode)
+		episodeRoutes.PUT("/:id", episodeController.UpdateEpisode)
+		episodeRoutes.DELETE("/:id", episodeController.DeleteEpisode)
+	}
+
+	genreRoutes := router.Group("/api/genre")
+	{
+		genreRoutes.GET("/", genreController.ListGenres)
+		genreRoutes.GET("/:id", genreController.GetGenre)
+		genreRoutes.POST("/", genreController.CreateGenre)
+		genreRoutes.PUT("/:id", genreController.UpdateGenre)
+		genreRoutes.DELETE("/:id", genreController.DeleteGenre)
+	}
+
+	animeGenreRoutes := router.Group("/api/anime_genres")
+	{
+		animeGenreRoutes.GET("/", animeGenreController.ListAnimeGenres)
+		animeGenreRoutes.GET("/:anime_id/:genre_id", animeGenreController.GetAnimeGenre)
+		animeGenreRoutes.POST("/", animeGenreController.CreateAnimeGenre)
+		animeGenreRoutes.DELETE("/:anime_id/:genre_id", animeGenreController.DeleteAnimeGenre)
+	}
+
+	commentRoutes := router.Group("/api/comments")
+	{
+		commentRoutes.GET("/", commentController.ListComments)
+		commentRoutes.GET("/:id", commentController.GetComment)
+		commentRoutes.POST("/", commentController.CreateComment)
+		commentRoutes.PUT("/:id", commentController.UpdateComment)
+		commentRoutes.DELETE("/:id", commentController.DeleteComment)
+	}
+
+	ratingRoutes := router.Group("/api/ratings")
+	{
+		ratingRoutes.GET("/", ratingController.ListRatings)
+		ratingRoutes.GET("/:id", ratingController.GetRatingByID)
+		ratingRoutes.POST("/", ratingController.CreateRating)
+		ratingRoutes.PUT("/:id", ratingController.UpdateRating)
+		ratingRoutes.DELETE("/:id", ratingController.DeleteRating)
+	}
+
+	recommendationRoutes := router.Group("/api/recommendations")
+	{
+		recommendationRoutes.GET("/", recommendationController.ListRecommendations)
+		recommendationRoutes.GET("/:id", recommendationController.GetRecommendationByID)
+		recommendationRoutes.POST("/", recommendationController.CreateRecommendation)
+		recommendationRoutes.PUT("/:id", recommendationController.UpdateRecommendation)
+		recommendationRoutes.DELETE("/:id", recommendationController.DeleteRecommendation)
+	}
+
+	reportRoutes := router.Group("/api/reports")
+	{
+		reportRoutes.GET("/", reportController.ListReports)
+		reportRoutes.GET("/:id", reportController.GetReportByID)
+		reportRoutes.POST("/", reportController.CreateReport)
+		reportRoutes.PUT("/:id", reportController.UpdateReport)
+		reportRoutes.DELETE("/:id", reportController.DeleteReport)
+	}
+
+	watchProgressRoutes := router.Group("/api/watch-progress")
+	{
+		watchProgressRoutes.GET("/", watchProgressController.ListWatchProgresses)
+		watchProgressRoutes.GET("/:id", watchProgressController.GetWatchProgressByID)
+		watchProgressRoutes.POST("/", watchProgressController.CreateWatchProgress)
+		watchProgressRoutes.PUT("/:id", watchProgressController.UpdateWatchProgress)
+		watchProgressRoutes.DELETE("/:id", watchProgressController.DeleteWatchProgress)
+	}
+
+	adminRoutes := router.Group("/api/admins")
+	{
+		adminRoutes.GET("/", adminController.GetAdmins)
+		adminRoutes.GET("/:id", adminController.GetAdmin)
+		adminRoutes.POST("/", adminController.CreateAdmin)
+		adminRoutes.PUT("/:id", adminController.UpdateAdmin)
+		adminRoutes.DELETE("/:id", adminController.DeleteAdmin)
+	}
+
+	// Get port from environment variable or use default
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "3001"
+		port = "8080"
 	}
+
+	// Start the server
+	log.Printf("Server starting on port %s...\n", port)
 	if err := router.Run(":" + port); err != nil {
-		log.Fatalf("Failed to run server: %v", err)
+		log.Fatal("Failed to start server:", err)
 	}
 }

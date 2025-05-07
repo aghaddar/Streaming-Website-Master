@@ -91,3 +91,79 @@ func (wc *WatchlistController) ListWatchlists(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, watchlists)
 }
+func (wc *WatchlistController) GetUserWatchlist(c *gin.Context) {
+	userIDParam := c.Query("userId")
+	if userIDParam == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is required"})
+		return
+	}
+	userID, err := strconv.ParseUint(userIDParam, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid userId"})
+		return
+	}
+	watchlists, err := wc.watchlistService.GetUserWatchlist(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, watchlists)
+}
+
+// AddAnimeToWatchlist adds an anime to the user's watchlist.
+// It expects a JSON body with userId and animeId.
+func (wc *WatchlistController) AddAnimeToWatchlist(c *gin.Context) {
+	var watchlist models.Watchlist
+	if err := c.ShouldBindJSON(&watchlist); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if err := wc.watchlistService.AddAnimeToWatchlist(&watchlist); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusCreated, watchlist)
+}
+
+// RemoveAnimeFromWatchlist removes an anime from the user's watchlist.
+// It expects the animeId as a URL parameter and a query or context parameter for userId.
+func (wc *WatchlistController) RemoveAnimeFromWatchlist(c *gin.Context) {
+	animeID := c.Param("animeId")
+	userIDParam := c.Query("userId")
+	if userIDParam == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is required"})
+		return
+	}
+	userID, err := strconv.ParseUint(userIDParam, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid userId"})
+		return
+	}
+	if err := wc.watchlistService.RemoveAnimeFromWatchlist(userID, animeID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Anime removed from watchlist"})
+}
+
+// CheckAnimeInWatchlist checks if an anime is in the user's watchlist.
+// It expects the animeId as a URL parameter and a query or context parameter for userId.
+func (wc *WatchlistController) CheckAnimeInWatchlist(c *gin.Context) {
+	animeID := c.Param("animeId")
+	userIDParam := c.Query("userId")
+	if userIDParam == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is required"})
+		return
+	}
+	userID, err := strconv.ParseUint(userIDParam, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid userId"})
+		return
+	}
+	exists, err := wc.watchlistService.CheckAnimeInWatchlist(userID, animeID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"exists": exists})
+}
